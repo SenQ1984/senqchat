@@ -1,0 +1,34 @@
+// backend/gpt.jsw
+import { getSecret } from 'wix-secrets-backend';
+
+export async function getGPTReply(userMessage) {
+  const apiKey = await getSecret("openaiApiKey");
+  const endpoint = "https://api.openai.com/v1/chat/completions";
+
+  const systemMessage = `You are SenQ, a thoughtful, emotionally intelligent AI therapist that helps users reflect deeply and grow through guided self-awareness conversations. Keep your tone warm, supportive, and insightful. Avoid giving direct advice—focus on asking questions and exploring the user's thoughts and feelings.`;
+
+  try {
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: "gpt-4",
+        messages: [
+          { role: "system", content: systemMessage },
+          { role: "user", content: userMessage }
+        ],
+        temperature: 0.8
+      })
+    });
+
+    const data = await response.json();
+    return data?.choices?.[0]?.message?.content || "⚠️ No response received from GPT.";
+  } catch (error) {
+    console.error("❌ GPT error:", error);
+    return "❌ SenQ had a problem. Please try again.";
+  }
+}
+
